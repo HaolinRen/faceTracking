@@ -418,7 +418,6 @@ def run3():
     for file in newsList:
         loadVideoDict(file, truthFaces, data)
 
-
 # run()
 
 run3()
