@@ -8,9 +8,11 @@ import random
 
 TEST_SUM = 2
 
-THREHOLD = 0.32
+THREHOLD = 0.28
 
 MIN_FRAME_COUNT = 20
+
+WIDTH_THROLD = 0.1
 
 def getRandomID(idSize, existIDList):
     alph = ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','f','e','g','h','i','j','k','l', 'm','n','o','p','q','r','s','t','u','v','w','x','y','z']
@@ -75,7 +77,6 @@ def processOneVideo(videoName, truthFaces):
 
         for oneFace in faces:
             oneFace['isRecognised'] = False
-            oneFace['rgNum'] = 0
         
         if len(faces) == lastFrameFaceNum:
             followFaces(faces, lastFaceBox)
@@ -140,6 +141,9 @@ def processVideo(videoName, tfaces):
     videoFile = cv2.VideoCapture(videoName)
     frameCount = videoFile.get(cv2.CAP_PROP_FRAME_COUNT)
 
+
+    videoWidth = videoFile.get(3)
+
     frameSum = int(frameCount)
 
     fps = videoFile.get(cv2.CAP_PROP_FPS)
@@ -152,13 +156,13 @@ def processVideo(videoName, tfaces):
 
     faceFrameDict = {}
 
-    lastFrameFaceNum = 0
-
     lastPercent = 0
 
     shuffle = 0
 
     face_counter = 0
+
+    faceEmbdDict = {}
 
     while videoFile.isOpened():
         ret, frame = videoFile.read()
@@ -181,8 +185,9 @@ def processVideo(videoName, tfaces):
         for oneFace in faces:
             oneFace['isRecognised'] = False
         
-        if len(faces) == lastFrameFaceNum:
-            followFaces(faces, lastFaceBox)
+
+        faces = yhatFaces(faces)
+        followFaces(faces, lastFaceBox)
 
         faceNameList = recogniseFaces(image, faces, existFaces)
         
@@ -191,9 +196,8 @@ def processVideo(videoName, tfaces):
                 faceFrameDict[oneName] = []
             faceFrameDict[oneName].append(k)
 
-
         lastFaceBox = faces
-        lastFrameFaceNum = len(faces)
+
         k += 4
 
     for oneFace in faceFrameDict:
@@ -208,23 +212,25 @@ def processVideo(videoName, tfaces):
         endTime = 0
     
         if lg > MIN_FRAME_COUNT:
-            for timeIndex in range(0, lg-1):
-                endTimeIndex = timeIndex + 1;
-                if startFrame == 0:
-                    startFrame = faceFrames[timeIndex]
-                if faceFrames[endTimeIndex] - faceFrames[timeIndex] > 60:
-                    endFrame = faceFrames[timeIndex]
-                    t0 = int(startFrame/k * duration)
-                    t1 = int(endFrame/k * duration)
-                    faceData.append([videoName, oneFace, startFrame, endFrame, k, t0, t1, t1-t0])
-                    startFrame = 0
-
-                if timeIndex == lg-2:
-                    if startFrame != 0:
-                        endFrame = faceFrames[lg-1]
+            faceName = compareTruthFaces(exfaces[oneFace], tfaces)
+            if faceName:
+                for timeIndex in range(0, lg-1):
+                    endTimeIndex = timeIndex + 1;
+                    if startFrame == 0:
+                        startFrame = faceFrames[timeIndex]
+                    if faceFrames[endTimeIndex] - faceFrames[timeIndex] > 60:
+                        endFrame = faceFrames[timeIndex]
                         t0 = int(startFrame/k * duration)
                         t1 = int(endFrame/k * duration)
-                        faceData.append([videoName, oneFace, startFrame, endFrame, k, t0, t1, t1-t0])
+                        faceData.append([videoName, faceName, startFrame, endFrame, k, t0, t1, t1-t0])
+                        startFrame = 0
+
+                    if timeIndex == lg-2:
+                        if startFrame != 0:
+                            endFrame = faceFrames[lg-1]
+                            t0 = int(startFrame/k * duration)
+                            t1 = int(endFrame/k * duration)
+                            faceData.append([videoName, faceName, startFrame, endFrame, k, t0, t1, t1-t0])
 
     videoFile.release()
     cv2.destroyAllWindows()
@@ -242,6 +248,10 @@ def testSimilarity(f0, fDict):
                 maxVal = matchVal
     return res
 
+def compareTruthFaces(unknownFace, tfaces):
+    faceRetargetDict = {}
+    faceName = testSimilarity(unknownFace, tfaces)
+    return faceName
 
 def processNewFaces(img, nfs, exfaces):
     faceNameList = []
@@ -302,31 +312,13 @@ def recogniseFaces(img, nfs, exfaces):
             if faceName:
                 oneFace['isRecognised'] = True
                 oneFace['name'] = faceName
-                faceNameList.append(faceName)
-                exfaces[faceName] = embedding
             else:
+                faceName = getRandomID()
+                oneFace['isRecognised'] = True
+                oneFace['name'] = faceName
 
-                faceName = testSimilarity(embedding, tfaces)
-
-                if faceName:
-                    if oneFace['rgNum'] >= TEST_SUM:
-                        if faceName == oneFace['lastName']:
-                            oneFace['isRecognised'] = True
-                            oneFace['name'] = faceName
-                            faceNameList.append(faceName)
-                            exfaces[faceName] = embedding
-                        else:
-                            oneFace['rgNum'] = 0
-                            oneFace['lastName'] = faceName
-                    else:
-                        oneFace['lastName'] = faceName
-                else:
-                    if oneFace['rgNum'] >= TEST_SUM:
-                        if oneFace['lastName'] == 'unknown':
-                            oneFace['isRecognised'] = True
-                            oneFace['name'] = 'unknown'
-                    else:
-                        oneFace['lastName'] = 'unknown'
+            faceNameList.append(faceName)
+            exfaces[faceName] = embedding
         else:
             faceNameList.append(oneFace['name'])
     return faceNameList
@@ -352,8 +344,14 @@ def followFaces(faceBox, lfbox):
                     oneFace['name'] = f2['name']
                     break
             
-def yhatFaces():
-    pass
+def yhatFaces(videoWidth):
+    res = []
+    for oneFace in faces:
+        wd = oneFace['box'][2]
+        if wd / videoWidth > WIDTH_THROLD:
+            res.append(oneFace)
+    return res
+
 
 def loadVideo(videoFolderPath, truthFaces, fullData):
     TOP_PATH = '/net/per610a/home/mvp/mvp_db/'
@@ -367,7 +365,7 @@ def loadVideo(videoFolderPath, truthFaces, fullData):
                     for dataFile in listdir(fullList):
                         if dataFile[-4:] == '.mpg':
                             fullFilePath = fullList + '/' + dataFile
-                            faceData = processOneVideo(recogniseFaces)
+                            faceData = processOneVideo(fullFilePath)
                             # saveProcessedData(data)
 
 def loadVideoDict(videoFolderPath, truthFaces, fullData):
@@ -423,4 +421,4 @@ def run3():
 
 # run()
 
-run2()
+run3()

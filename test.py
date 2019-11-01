@@ -1,8 +1,19 @@
-import numpy as np
-from keras.preprocessing import image
-from keras_vggface.vggface import VGGFace
-from keras_vggface import utils
-import os
+# import numpy as np
+# from keras.preprocessing import image
+# from keras_vggface.vggface import VGGFace
+# from keras_vggface import utils
+# import os
+
+import cv2
+
+def videoWdithTest():
+    videoFile = cv2.VideoCapture('/Users/hren/Workspace/NII/deepLearning/NHKcoding/data/videos/v.webm')
+    wd = videoFile.get(3)
+    ht = videoFile.get(4)
+    print(ht)
+    print(wd)
+
+videoWdithTest()
 
 # tensorflow
  # default : VGG16 , you can use model='resnet50' or 'senet50'
