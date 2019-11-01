@@ -14,6 +14,8 @@ import csv
 
 IMAGE_SIZE = 224
 
+FACE_ADDRESS = 'data/faces'
+
 # extract a single face from a given photograph
 def extract_face(filename, required_size=(IMAGE_SIZE, IMAGE_SIZE)):
 
@@ -122,7 +124,7 @@ def is_match(known_embedding, candidate_embedding, thresh=0.3):
 
 
 def loadTruthFaces():
-    images = os.listdir('data/faces')
+    images = os.listdir(FACE_ADDRESS)
     filenames = []
     existEmbedding = {}
 
@@ -130,7 +132,7 @@ def loadTruthFaces():
     for i in images:
         if i[0] != '.':
             temp.append(i)
-            filenames.append('data/faces/' + i)
+            filenames.append(FACE_ADDRESS + i)
 
     embeddings = get_embeddings(filenames)
     for i in range(len(temp)):
