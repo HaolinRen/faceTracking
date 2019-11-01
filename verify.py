@@ -14,7 +14,7 @@ import csv
 
 IMAGE_SIZE = 224
 
-FACE_ADDRESS = 'data/faces'
+FACE_ADDRESS = 'data/faces/'
 
 # extract a single face from a given photograph
 def extract_face(filename, required_size=(IMAGE_SIZE, IMAGE_SIZE)):

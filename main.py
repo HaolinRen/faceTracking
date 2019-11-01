@@ -14,7 +14,11 @@ MIN_FRAME_COUNT = 20
 
 WIDTH_THROLD = 0.1
 
-def getRandomID(idSize, existIDList):
+existIDList = []
+
+idSize = 10
+
+def getRandomID():
     alph = ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','f','e','g','h','i','j','k','l', 'm','n','o','p','q','r','s','t','u','v','w','x','y','z']
     lg = len(alph) - 1
     rdName = ''
@@ -44,8 +48,6 @@ def processOneVideo(videoName, truthFaces):
 
     faceFrameDict = {}
 
-
-
     lastFrameFaceNum = 0
 
     lastPercent = 0
@@ -60,7 +62,7 @@ def processOneVideo(videoName, truthFaces):
             break
 
         # each 5 frame extract faces from video
-        if shuffle < 5:
+        if shuffle < 10:
             shuffle += 1
             continue
 
@@ -94,7 +96,7 @@ def processOneVideo(videoName, truthFaces):
 
         lastFrameFaceNum = len(faces)
 
-        k += 4
+        k += 9
 
         # if cv2.waitKey(1) & 0xFF == ord('q'):
         #     break
@@ -117,7 +119,7 @@ def processOneVideo(videoName, truthFaces):
                 endTimeIndex = timeIndex + 1;
                 if startFrame == 0:
                     startFrame = faceFrames[timeIndex]
-                if faceFrames[endTimeIndex] - faceFrames[timeIndex] > 24:
+                if faceFrames[endTimeIndex] - faceFrames[timeIndex] > 60:
                     endFrame = faceFrames[timeIndex]
                     t0 = int(startFrame/k * duration)
                     t1 = int(endFrame/k * duration)
@@ -186,7 +188,7 @@ def processVideo(videoName, tfaces):
             oneFace['isRecognised'] = False
         
 
-        faces = yhatFaces(faces)
+        faces = yhatFaces(faces, videoWidth)
         followFaces(faces, lastFaceBox)
 
         faceNameList = recogniseFaces(image, faces, existFaces)
@@ -212,7 +214,7 @@ def processVideo(videoName, tfaces):
         endTime = 0
     
         if lg > MIN_FRAME_COUNT:
-            faceName = compareTruthFaces(exfaces[oneFace], tfaces)
+            faceName = compareTruthFaces(existFaces[oneFace], tfaces)
             if faceName:
                 for timeIndex in range(0, lg-1):
                     endTimeIndex = timeIndex + 1;
@@ -344,7 +346,7 @@ def followFaces(faceBox, lfbox):
                     oneFace['name'] = f2['name']
                     break
             
-def yhatFaces(videoWidth):
+def yhatFaces(faces, videoWidth):
     res = []
     for oneFace in faces:
         wd = oneFace['box'][2]
@@ -384,8 +386,6 @@ def loadVideoDict(videoFolderPath, truthFaces, fullData):
                             fullData += faceData
                             saveProcessedData(fullData)
 
-
-
 def run():
     videoList = getVideo()
     truthFaces = loadTruthFaces()
@@ -420,4 +420,14 @@ def run3():
 
 # run()
 
+def test():
+    truthFaces = loadTruthFaces()
+
+    faceData = processVideo('/Users/hren/Workspace/NII/deepLearning/NHKcoding/data/videos/v.webm', truthFaces)
+    saveProcessedData(faceData)
+
+# test()
 run3()
+
+
+

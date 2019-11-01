@@ -2,7 +2,10 @@
 # from keras.preprocessing import image
 # from keras_vggface.vggface import VGGFace
 # from keras_vggface import utils
-# import os
+import os
+FACE_ADDRESS = 'data/faces/'
+images = os.listdir(FACE_ADDRESS)
+print(images)
 
 import cv2
 
@@ -13,7 +16,7 @@ def videoWdithTest():
     print(ht)
     print(wd)
 
-videoWdithTest()
+# videoWdithTest()
 
 # tensorflow
  # default : VGG16 , you can use model='resnet50' or 'senet50'
